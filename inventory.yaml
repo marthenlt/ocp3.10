@@ -1,0 +1,267 @@
+[OSEv3:vars]
+
+
+###########################################################################
+### Ansible Vars
+###########################################################################
+timeout=60
+ansible_become=yes
+ansible_ssh_user=ec2-user
+
+
+# disable memory check, as we are not a production environment
+#openshift_disable_check=memory_availability
+openshift_disable_check=memory_availability,disk_availability,docker_storage,docker_image_availability
+
+
+# Set this line to enable NFS
+openshift_enable_unsupported_configurations=True
+
+
+# this is not a containerized installation, this is a RPM installation
+containerized=false
+
+
+# Set OCP to be deployed to 3.9
+openshift_deployment_type=openshift-enterprise
+openshift_release=v3.10
+openshift_image_tag=v3.10
+
+
+# Manage openshift example imagestreams and templates during install and upgrade
+openshift_install_examples=true
+
+
+openshift_use_dnsmasq=True
+
+
+# Set the NTP
+openshift_clock_enabled=true
+
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=1588768
+# https://access.redhat.com/solutions/3480921
+#oreg_url=registry.access.redhat.com/openshift3/ose-${component}:${version}
+#openshift_examples_modify_imagestreams=true
+
+
+# we are using native HAProxy Loadbalancer
+openshift_master_cluster_method=native
+
+
+# internal LB hostname. this LB will frontend all masters
+openshift_master_cluster_hostname=loadbalancer1.<GUID_TO_BE_REPLACED>.internal
+
+
+# external LB hostname which accessible by outside traffic. example: loadbalancer.<GUID_TO_BE_REPLACED>.example.opentlc.com
+openshift_master_cluster_public_hostname=loadbalancer.<GUID_TO_BE_REPLACED>.example.opentlc.com
+
+
+# this is where Router pod will listen to. this is also where the address wildcard DNS (*.apps.<GUID_TO_BE_REPLACED>.example.opentlc.com), do not need to append the asterisk (*) for this value. example: apps.<GUID_TO_BE_REPLACED>.example.opentlc.com
+openshift_master_default_subdomain=apps.<GUID_TO_BE_REPLACED>.example.opentlc.com
+
+
+# This is the port that the Master Console and API will be listening on, default is 8443
+openshift_master_api_port=443
+openshift_master_console_port=443
+
+
+# Use firewalld
+os_firewall_use_firewalld=True
+
+
+# OpenShift Registry Configuration
+# By default we don't need this annotation, but if you want to have a scaled registry we can annotate this "openshift_hosted_registry_replicas" value to more than 1
+#openshift_hosted_registry_replicas=1
+# External NFS Host
+openshift_hosted_registry_storage_kind=nfs
+openshift_hosted_registry_storage_access_modes=['ReadWriteMany']
+# No need to tell specifically to point the "openshift_hosted_registry_storage_host" to specific NFS node, as Ansible will smart enough gets it from [nfs] group inside the inventory.
+#openshift_hosted_registry_storage_host=support1.<GUID_TO_BE_REPLACED>.internal
+openshift_hosted_registry_storage_nfs_directory=/srv/nfs
+openshift_hosted_registry_storage_volume_name=registry
+openshift_hosted_registry_storage_volume_size=20Gi
+openshift_hosted_registry_storage_nfs_options='*(rw,root_squash)'
+openshift_hosted_registry_pullthrough=true
+openshift_hosted_registry_acceptschema2=true
+openshift_hosted_registry_enforcequota=true
+
+
+#httpaswd configuration
+#openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider'}]
+
+
+# htpasswd users
+openshift_master_htpasswd_file=/etc/ansible/users.htpasswd
+
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=1538616
+openshift_hosted_infra_selector="env=infra"
+
+
+
+# Logging Configuration
+openshift_logging_install_logging=true
+# Using NFS for the logging storage engine 
+openshift_logging_storage_kind=nfs
+openshift_logging_storage_access_modes=['ReadWriteOnce']
+openshift_logging_storage_nfs_directory=/srv/nfs
+openshift_logging_storage_nfs_options='*(rw,root_squash)'
+openshift_logging_storage_volume_name=logging
+openshift_logging_storage_volume_size=10Gi
+openshift_logging_storage_labels={'storage': 'logging'}
+# Allow cluster-reader role to view operations logs
+openshift_logging_es_allows_cluster_reader=true
+openshift_master_logging_public_url=https://kibana.{{openshift_master_default_subdomain}}
+openshift_logging_kibana_hostname=kibana.{{openshift_master_default_subdomain}}
+# For the duration of the course/training due to limited no of resources. but during actual implementation of ES, it could have multiple ES clusters. 
+openshift_logging_es_cluster_size=1
+openshift_logging_image_version=v3.10
+
+
+
+# Deploy Metrics
+openshift_metrics_install_metrics=true
+openshift_metrics_hawkular_hostname=metrics.{{openshift_master_default_subdomain}}
+#openshift_metrics_cassandra_storage_type=emptydir
+# Using NFS for the metrics storage engine 
+openshift_metrics_storage_kind=nfs
+openshift_metrics_storage_access_modes=['ReadWriteOnce']
+openshift_metrics_storage_nfs_directory=/srv/nfs
+openshift_metrics_storage_nfs_options='*(rw,root_squash)'
+openshift_metrics_storage_volume_name=metrics
+openshift_metrics_storage_volume_size=10Gi
+openshift_metrics_storage_labels={'storage': 'metrics'}
+openshift_metrics_image_version=v3.10
+
+
+
+# Enable service catalog
+openshift_enable_service_catalog=true
+
+# Enable template service broker (requires service catalog to be enabled, above)
+template_service_broker_install=true
+# namespace openshift template service broker
+openshift_template_service_broker_namespaces=['openshift']
+
+# Enable ansible service broker
+ansible_service_broker_install=true
+ansible_service_broker_local_registry_whitelist=['.*-apb$']
+# Ansible service broker needs a dedicated Etcd instance different from Etcd that holds the entire cluster's states. This dedicated Etcd storage needs its own independent storage which in this course we are going to use NFS. Keep in mind that this independent Etcd is going to be removed in future release of OpenShift.
+openshift_hosted_etcd_storage_kind=nfs
+openshift_hosted_etcd_storage_nfs_options="*(rw,root_squash,sync,no_wdelay)"
+openshift_hosted_etcd_storage_nfs_directory=/srv/nfs
+openshift_hosted_etcd_storage_labels={'storage': 'etcd-asb'}
+openshift_hosted_etcd_storage_volume_name=etcd-asb
+openshift_hosted_etcd_storage_access_modes=['ReadWriteOnce']
+openshift_hosted_etcd_storage_volume_size=10G
+
+
+## -- Disable Prometheus installation, as it has some issue https://bugzilla.redhat.com/show_bug.cgi?id=1609019
+## # Prometheus deployment
+## openshift_hosted_prometheus_deploy=true
+## #openshift_prometheus_storage_type=emptydir
+## #openshift_prometheus_alertmanager_storage_type=emptydir
+## #openshift_prometheus_alertbuffer_storage_type=emptydir
+## openshift_prometheus_namespace=openshift-metrics
+## openshift_prometheus_node_selector={"env":"infra"}
+## # Prometheus storage
+## openshift_prometheus_storage_kind=nfs
+## openshift_prometheus_storage_access_modes=['ReadWriteOnce']
+## openshift_prometheus_storage_nfs_directory=/srv/nfs
+## openshift_prometheus_storage_nfs_options='*(rw,root_squash)'
+## openshift_prometheus_storage_volume_name=prometheus
+## openshift_prometheus_storage_volume_size=10Gi
+## openshift_prometheus_storage_labels={'storage': 'prometheus'}
+## openshift_prometheus_storage_type='pvc'
+## # prometheus-alertmanager storage
+## openshift_prometheus_alertmanager_storage_kind=nfs
+## openshift_prometheus_alertmanager_storage_access_modes=['ReadWriteOnce']
+## openshift_prometheus_alertmanager_storage_nfs_directory=/srv/nfs
+## openshift_prometheus_alertmanager_storage_nfs_options='*(rw,root_squash)'
+## openshift_prometheus_alertmanager_storage_volume_name=prometheus-alertmanager
+## openshift_prometheus_alertmanager_storage_volume_size=10Gi
+## openshift_prometheus_alertmanager_storage_labels={'storage': 'prometheus-alertmanager'}
+## openshift_prometheus_alertmanager_storage_type='pvc'
+## # prometheus-alertbuffer storage
+## openshift_prometheus_alertbuffer_storage_kind=nfs
+## openshift_prometheus_alertbuffer_storage_access_modes=['ReadWriteOnce']
+## openshift_prometheus_alertbuffer_storage_nfs_directory=/srv/nfs
+## openshift_prometheus_alertbuffer_storage_nfs_options='*(rw,root_squash)'
+## openshift_prometheus_alertbuffer_storage_volume_name=prometheus-alertbuffer
+## openshift_prometheus_alertbuffer_storage_volume_size=10Gi
+## openshift_prometheus_alertbuffer_storage_labels={'storage': 'prometheus-alertbuffer'}
+## openshift_prometheus_alertbuffer_storage_type='pvc'
+## # Necessary because of a bug in the installer on 3.9
+## openshift_prometheus_node_exporter_image_version=v3.10
+
+
+## # Grafana deployment, requires Prometheus
+## openshift_hosted_grafana_deploy=true
+
+
+# Configure the multi-tenant SDN plugin (default is 'redhat/openshift-ovs-subnet')
+#os_sdn_network_plugin_name='redhat/openshift-ovs-subnet' 
+# lab day 2 - start using openshift-ovs-networkpolicy
+
+os_sdn_network_plugin_name='redhat/openshift-ovs-networkpolicy'
+
+
+##Pod Network CIDR
+#osm_cluster_network_cidr=172.16.0.0/16
+
+
+##Service Network CIDR, default (172.30.0.0/16).
+#openshift_portal_net=172.30.0.0/16
+
+
+
+# Project Configuration
+osm_project_request_message='Please create project using the portal http://portal.$GUID.internal/provision or contact Marthen at admin@operational.opentlc.com'
+
+
+###########################################################################
+### OpenShift Hosts
+###########################################################################
+[OSEv3:children]
+lb
+masters
+etcd
+nodes
+nfs
+
+[lb]
+loadbalancer1.<GUID_TO_BE_REPLACED>.internal
+
+[masters]
+master1.<GUID_TO_BE_REPLACED>.internal
+master2.<GUID_TO_BE_REPLACED>.internal
+master3.<GUID_TO_BE_REPLACED>.internal
+
+[etcd]
+master1.<GUID_TO_BE_REPLACED>.internal
+master2.<GUID_TO_BE_REPLACED>.internal
+master3.<GUID_TO_BE_REPLACED>.internal
+
+[nodes]
+## These are the masters
+master1.<GUID_TO_BE_REPLACED>.internal openshift_hostname=master1.<GUID_TO_BE_REPLACED>.internal  openshift_node_labels="{'env': 'master', 'cluster': '<GUID_TO_BE_REPLACED>'}" openshift_node_group_name='node-config-master'
+master2.<GUID_TO_BE_REPLACED>.internal openshift_hostname=master2.<GUID_TO_BE_REPLACED>.internal  openshift_node_labels="{'env': 'master', 'cluster': '<GUID_TO_BE_REPLACED>'}" openshift_node_group_name='node-config-master'
+master3.<GUID_TO_BE_REPLACED>.internal openshift_hostname=master3.<GUID_TO_BE_REPLACED>.internal  openshift_node_labels="{'env': 'master', 'cluster': '<GUID_TO_BE_REPLACED>'}" openshift_node_group_name='node-config-master'
+
+## These are infranodes
+infranode1.<GUID_TO_BE_REPLACED>.internal openshift_hostname=infranode1.<GUID_TO_BE_REPLACED>.internal  openshift_node_labels="{'env':'infra', 'cluster': '<GUID_TO_BE_REPLACED>'}" openshift_node_group_name='node-config-infra'
+infranode2.<GUID_TO_BE_REPLACED>.internal openshift_hostname=infranode2.<GUID_TO_BE_REPLACED>.internal  openshift_node_labels="{'env':'infra', 'cluster': '<GUID_TO_BE_REPLACED>'}" openshift_node_group_name='node-config-infra'
+
+## These are regular nodes
+node1.<GUID_TO_BE_REPLACED>.internal openshift_hostname=node1.<GUID_TO_BE_REPLACED>.internal  openshift_node_labels="{'env':'app', 'cluster': '<GUID_TO_BE_REPLACED>', 'client' : 'common'}" openshift_node_group_name='node-config-compute'
+node2.<GUID_TO_BE_REPLACED>.internal openshift_hostname=node2.<GUID_TO_BE_REPLACED>.internal  openshift_node_labels="{'env':'app', 'cluster': '<GUID_TO_BE_REPLACED>', 'client' : 'alpha'}" openshift_node_group_name='node-config-compute'
+node3.<GUID_TO_BE_REPLACED>.internal openshift_hostname=node3.<GUID_TO_BE_REPLACED>.internal  openshift_node_labels="{'env':'app', 'cluster': '<GUID_TO_BE_REPLACED>', 'client' : 'beta'}" openshift_node_group_name='node-config-compute'
+
+[nfs]
+support1.<GUID_TO_BE_REPLACED>.internal openshift_hostname=support1.<GUID_TO_BE_REPLACED>.internal
+
+
+
+

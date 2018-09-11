@@ -1,0 +1,7 @@
+---
+- name: Running the prerequisite playbook
+  import_playbook: /usr/share/ansible/openshift-ansible/playbooks/prerequisites.yml
+
+- name: Installing OCP cluster by running deploy_cluster playbook - It might take a while.. go grab a coffee..
+  import_playbook: /usr/share/ansible/openshift-ansible/playbooks/deploy_cluster.yml
+

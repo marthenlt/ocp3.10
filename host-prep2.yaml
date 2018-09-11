@@ -1,0 +1,14 @@
+---
+- name: Manage Subscriptions
+  hosts: all
+  tasks:
+  - block:
+
+    - name: unsubscribe nodes
+      redhat_subscription:
+        state: absent
+
+    tags:
+    - unsub-nodes
+
+

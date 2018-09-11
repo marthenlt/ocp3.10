@@ -1,0 +1,131 @@
+---
+- name: Manage Subscriptions
+  hosts: all
+  tasks:
+#  - block:
+#    - name: unsubscribe nodes
+#      redhat_subscription:
+#        state: absent
+#    tags:
+#    - unsub-nodes
+
+
+  - block:
+
+    - name: Subscribe Nodes
+      redhat_subscription:
+        force_register: yes
+        username: 
+        password: 
+
+    - name: Refresh the repo
+      shell: subscription-manager refresh
+
+    - name: Attach the pool id
+      shell: subscription-manager attach --pool=
+
+    - name: Disable all repos
+      shell: subscription-manager repos --disable=*
+
+    - name: Add subscription manager repos
+      shell: subscription-manager repos --disable=* --enable="rhel-7-server-rpms" --enable="rhel-7-server-extras-rpms" --enable="rhel-7-server-ose-3.9-rpms" --enable="rhel-7-fast-datapath-rpms" --enable="rhel-7-server-ansible-2.4-rpms"
+    tags:
+    - subscribe-nodes
+
+
+  - block:
+    - name: yum-clean-metadata
+      command: yum clean metadata
+
+    - name: update packages
+      yum:
+        name: '*'
+        state: latest
+
+    - name: install packages
+      yum:
+        name: "{{ item }}"
+        state: latest
+      with_items:
+      - bash-completion
+      - bind-utils
+      - bridge-utils
+      - git
+      - iptables-services
+      - kexec-tools
+      - net-tools
+      - psacct
+      - sos
+      - wget
+      - sysstat 
+      - yum-utils
+      - openshift-ansible
+
+    - name: Install Docker
+      yum:
+        name: docker-1.13.1
+        state: present
+    tags:
+    - install-packages
+
+  - block:
+    - name: stop docker
+      systemd:
+        name: docker
+        enabled: true
+        state: stopped 
+
+    - name: Unmount unused mount points
+      mount:
+        path: /var/lib/docker
+        state: unmounted
+      when: "'masters' and 'nfs' not in group_names"
+
+    - name: Unmount unused mount points
+      mount:
+        path: /var/lib/origin/openshift.local.volumes
+        state: unmounted
+      when: "'masters' and 'nfs' not in group_names"
+    tags:
+    - mount-points
+
+  - block:
+#    - name: setup docker-storage file
+#      copy:
+#        content: |
+#          DEVS=/dev/sdb
+#          VG=docker-vg
+#        dest: /etc/sysconfig/docker-storage-setup
+#      when: "'lb' not in group_names"
+
+    - name: setup docker-storage file
+      copy:
+        content: |
+          VG=docker-vg
+        dest: /etc/sysconfig/docker-storage-setup
+      when: "'lb' and 'nfs' not in group_names"
+
+    - name: delete existing docker-storage file
+      file:
+        path: /etc/sysconfig/docker-storage
+        state: absent
+      when: "'lb' and 'nfs' not in group_names"
+
+#    - name: wipe docker storage device
+#      command: >
+#        wipefs -a /dev/sdb
+#      when: "'lb' and 'nfs' not in group_names"
+
+    - name: configure docker storage
+      command: >
+        docker-storage-setup 
+      when: "'lb' and 'nfs' not in group_names"
+
+    - name: enable & start docker
+      systemd:
+        name: docker
+        daemon_reload: true
+        enabled: true
+        state: started
+    tags:
+    - setup-docker-storage

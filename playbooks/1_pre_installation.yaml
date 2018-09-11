@@ -1,0 +1,70 @@
+---
+- name: PRE-INSTALLATION TASKS - Init playbook before installation kickoff in bastion host
+  hosts: localhost 
+  tasks:
+    - name: Get current GUID from hostname
+      shell: hostname | cut -d"." -f2
+      register: GUID 
+
+    - name: Display the GUID value
+      debug:
+        msg: "GUID: {{ GUID.stdout }}"
+
+    - name: Replace <GUID_TO_BE_REPLACED> with current GUID in inventory file
+      replace:
+        path: /etc/ansible/hosts
+        regexp: '<GUID_TO_BE_REPLACED>'
+        replace: '{{ GUID.stdout }}' 
+
+    - name: Refresh inventory
+      meta: refresh_inventory
+
+#    - name: Install atomic-openshift-utils and atomic-openshift-clients
+#      yum:
+#        name: "{{ packages }}"
+#      vars:
+#        packages:
+#        - atomic-openshift-utils
+#        - atomic-openshift-clients
+
+
+- name: Extract GUID from hostname, and then push it to bashrc for all nodes
+  hosts: all
+  tasks:
+  - block:
+    - name: Get current GUID from hostname
+      shell: hostname | cut -d"." -f2
+      register: GUID
+
+    - name: All GUID env variable
+      shell: export GUID=`{{ GUID.stdout }}`; echo "export GUID=$GUID" >> $HOME/.bashrc
+      environment:
+        GUID: "{{ GUID.stdout }}"
+    tags:
+    - guid-export-via-bashrc-for-all-nodes
+
+
+- name: Docker check, make sure it runs in all nodes
+  hosts: nodes  
+  tasks:
+    - name: Check docker running
+      shell: systemctl status docker | grep Active
+    - name: Check docker version
+      shell: docker version | grep Version
+
+
+- name: Check yum repos
+  hosts: all
+  tasks:
+    - name: Check yum repo list
+      yum:
+        list: repolist      
+      register: result
+
+
+- name: Check NFS
+  hosts: nfs
+  tasks:
+    - name: exportfs
+      shell: exportfs
+
