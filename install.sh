@@ -2,7 +2,7 @@
 
 echo " "
 echo "======================================================================================================================================================================="
-echo "Installation of OCP is starting.. It might take 60-70 minutes untill all the modules are fully installed and loaded. Sit back and relax.. Do grab a cup of coffee now.."
+echo "Installation of OCP 3.10 is starting.. It might take awhile. Sit back and relax.. Do grab a cup of coffee now.."
 echo "======================================================================================================================================================================="
 echo "Installation prepared by. Marthen Luther "
 echo " "

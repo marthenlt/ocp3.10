@@ -97,8 +97,8 @@ openshift_master_htpasswd_file=/etc/ansible/users.htpasswd
 
 
 # https://bugzilla.redhat.com/show_bug.cgi?id=1538616
-openshift_hosted_infra_selector="env=infra"
-
+#openshift_hosted_infra_selector="env=infra"
+openshift_hosted_infra_selector={"env":"infra"}
 
 
 # Logging Configuration

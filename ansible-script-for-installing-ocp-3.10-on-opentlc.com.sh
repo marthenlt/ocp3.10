@@ -6,12 +6,14 @@ subscription-manager unsubscribe --all
 
 subscription-manager unregister
 
+#use your existing valid subscription
 subscription-manager register --username= --password= --force
 
 subscription-manager refresh
 
 subscription-manager list --available --matches "Red Hat OpenShift Container Platform" | egrep -e "Subscription Name" -e "Pool ID" -e "Available"
 
+#attach the pool id
 subscription-manager attach --pool=
 
 subscription-manager repos --disable="*"
@@ -42,12 +44,14 @@ ansible all -m shell -a 'subscription-manager unsubscribe --all'
 
 ansible all -m shell -a 'subscription-manager unregister'
 
+#the same here, use your valid subs
 ansible all -m shell -a 'subscription-manager register --username= --password= --force'
 
 ansible all -m shell -a 'subscription-manager refresh'
 
 ansible all -m shell -a 'subscription-manager list --available --matches "Red Hat OpenShift Container Platform" | egrep -e "Subscription Name" -e "Pool ID" -e "Available"'
 
+#pool id
 ansible all -m shell -a 'subscription-manager attach --pool='
 
 ansible all -m shell -a 'subscription-manager repos --disable="*"'
@@ -72,11 +76,12 @@ ansible all -m shell -a 'yum install openshift-ansible'
 
 ansible all -m shell -a 'yum install docker-1.13.1'
 
-ansible all -m shell -a 'cat <<EOF > /etc/sysconfig/docker-storage-setup
-VG=docker-vg
-EOF'
+#it seems opentlc has already preconfigure docker storage, so we just skip this
+#ansible all -m shell -a 'cat <<EOF > /etc/sysconfig/docker-storage-setup
+#VG=docker-vg
+#EOF'
 
-ansible all -m shell -a 'docker-storage-setup'
+#ansible all -m shell -a 'docker-storage-setup'
 
 ansible all -m shell -a 'systemctl enable docker'
 
