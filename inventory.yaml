@@ -256,6 +256,8 @@ infranode2.<GUID_TO_BE_REPLACED>.internal openshift_hostname=infranode2.<GUID_TO
 node1.<GUID_TO_BE_REPLACED>.internal openshift_hostname=node1.<GUID_TO_BE_REPLACED>.internal  openshift_node_labels="{'env':'app', 'cluster': '<GUID_TO_BE_REPLACED>', 'client' : 'common'}" openshift_node_group_name='node-config-compute'
 node2.<GUID_TO_BE_REPLACED>.internal openshift_hostname=node2.<GUID_TO_BE_REPLACED>.internal  openshift_node_labels="{'env':'app', 'cluster': '<GUID_TO_BE_REPLACED>', 'client' : 'alpha'}" openshift_node_group_name='node-config-compute'
 node3.<GUID_TO_BE_REPLACED>.internal openshift_hostname=node3.<GUID_TO_BE_REPLACED>.internal  openshift_node_labels="{'env':'app', 'cluster': '<GUID_TO_BE_REPLACED>', 'client' : 'beta'}" openshift_node_group_name='node-config-compute'
+node4.<GUID_TO_BE_REPLACED>.internal openshift_hostname=node4.<GUID_TO_BE_REPLACED>.internal  openshift_node_labels="{'env':'app', 'cluster': '<GUID_TO_BE_REPLACED>', 'client' : 'gamma'}" openshift_node_group_name='node-config-compute'
+
 
 [nfs]
 support1.<GUID_TO_BE_REPLACED>.internal openshift_hostname=support1.<GUID_TO_BE_REPLACED>.internal
