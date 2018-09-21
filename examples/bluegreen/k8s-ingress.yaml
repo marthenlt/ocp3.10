@@ -1,0 +1,18 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-test
+spec:
+  rules:
+  - host: ruby-ex-ingress-test.apps.86fb.example.opentlc.com
+    http:
+     paths:
+     - path: /blue
+       backend:
+        serviceName: example-blue
+        servicePort: 8080
+     - path: /green
+       backend:
+        serviceName: example-green
+        servicePort: 8080
+
