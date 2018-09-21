@@ -1,0 +1,71 @@
+---
+- name: Copy master .kube/config to bastion so that bastion can use system:admin user 
+  hosts: masters[0]
+  vars:
+    version: 1
+  tasks:
+    - name: Copy .kube/config file
+      fetch:
+        src: /root/.kube/config
+        dest: /root/.kube/config
+        flat: yes
+
+- name: Post check - oc get nodes
+  hosts: localhost
+  tasks:
+    - name: oc get nodes
+      command: "oc get nodes -o wide --show-labels"
+
+- name: Post check - oc get pods
+  hosts: localhost
+  tasks:
+    - name: oc get pods
+      command: "oc get pods -o wide --all-namespaces"
+
+- name: Configure NFS server 
+  hosts: nfs
+  tasks:
+    - name: Create directories in NFS
+      script: ../scripts/pvs_create_directories_in_nfs.sh
+
+    - name: Restart nfs service
+      shell: systemctl restart nfs-server
+
+- name: Create 25 PV files with 5G size
+  hosts: localhost
+  tasks:
+    - name: Create definitions
+      script: ../scripts/pv5G.sh
+
+- name: Create 25 PVs files with 10G size
+  hosts: localhost
+  tasks:
+    - name: Create definitions
+      script: ../scripts/pv10G.sh
+
+- name: Create all PVs by loading it from the PV files
+  hosts: localhost
+  tasks:
+    - name: Load all PV files under ../pvs/ folder in bastion
+      script: ../scripts/load_pvs.sh
+
+- name: Fix NFS Persistent Volume Recycling
+  hosts: nodes
+  tasks:
+    - name: Docker pull
+      command: "docker pull registry.access.redhat.com/openshift3/ose-recycler:latest"
+    - name: Docker tag
+      command: "docker tag registry.access.redhat.com/openshift3/ose-recycler:latest registry.access.redhat.com/openshift3/ose-recycler:v3.10.34-3"
+
+- name: Deploy a sample app nodejs-mongo-persistent
+  hosts: localhost
+  tasks:
+    - name: create a new project
+      command: "oc new-project smoke-test"
+    - name: create the nodejs mongodb persistent app
+      command: "oc new-app nodejs-mongo-persistent -n smoke-test"
+    - name: check build pods
+      command: "oc get pods -n smoke-test"
+    - name: check the route
+      command: "oc get route -n smoke-test"
+
